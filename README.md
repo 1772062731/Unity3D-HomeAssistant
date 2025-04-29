@@ -56,7 +56,7 @@ NativeWebSocket 不是官方包，需要通过 Git URL 安装：
    - `Long Lived Token`: HomeAssistant长期访问令牌。在HA面板 左下角用户名-安全-长期访问令牌 可以创建
    - `HomeManager.cs`脚本内的两个“无”，点击右边的圆圈并选中对应的脚本
 
-![HomeAssistant.png](./Pictures/HomeAssistant.png)
+![HomeAssistant.png](./.Pictures/HomeAssistant.png)
 
 ### 步骤3: 设置智能灯光对象
 
@@ -69,7 +69,7 @@ NativeWebSocket 不是官方包，需要通过 Git URL 安装：
    - 设置亮度范围: `Min Intensity`和`Max Intensity`
    - 如果需要发光材质效果，设置`Emissive Material`
 
-![SmartLight.png](./Pictures/SmartLight.png)
+![SmartLight.png](./.Pictures/SmartLight.png)
 
 ## 3. 使用示例
 
