@@ -90,6 +90,34 @@ public class HomeAssistantAPI : MonoBehaviour
             }
         }
     }
+
+    // 控制除湿机
+    public IEnumerator SetHumidifierState(string entityId, bool turnOn, Action<bool> callback = null)
+    {
+        string url = $"{haServerUrl}/api/services/humidifier/{(turnOn ? "turn_on" : "turn_off")}";
+        string jsonData = $"{{\"entity_id\": \"{entityId}\"}}";
+
+        using (UnityWebRequest request = UnityWebRequest.PostWwwForm(url, ""))
+        {
+            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Authorization", $"Bearer {longLivedToken}");
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                callback?.Invoke(true);
+            }
+            else
+            {
+                Debug.LogError($"Error: {request.error}");
+                callback?.Invoke(false);
+            }
+        }
+    }
 }
 
 [Serializable]
