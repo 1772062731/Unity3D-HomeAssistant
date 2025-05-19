@@ -2,6 +2,7 @@
 
 ## 0. 项目概述
 本项目旨在演示如何使用Unity3D与HomeAssistant进行通信，实现智能家居的3D可视化。项目包含了Unity脚本、预制体。
+
 通过导出Unity项目为WebGL，可在浏览器中运行，并可通过iframe嵌入到HA面板中。
 ![main.png](./.Pictures/main.png)
 
@@ -18,8 +19,11 @@
 - `SmartLight.cs`: 控制Unity场景中的灯光对象
 - `SmartAppliance.cs`: 控制Unity场景中的电器对象，包括净化器、除湿机、空调
 - `HomeManager.cs`: 管理智能家居设备的状态
+- `CurtainController.cs`: 控制窗帘的开合
+- `DoorController.cs`: 控制门的开合（角度）
+- `GasAlarmLight.cs`: 同步燃气报警器的灯光
 
-风流特效：`/Prefabs`文件夹内有风流特效的预制体`Wind.prefab`，可以通过调整起始生命周期、起始速度来调整风流的长度和速度
+**风流特效**：`/Prefabs`文件夹内有风流特效的预制体`Wind.prefab`，使用粒子效果及其拖尾来实现。可以通过调整粒子的起始生命周期、起始速度来调整风流的长度和速度
 
 导入后放到适当的位置，并拖入对应电器的`SmartAppliance脚本`内的“`WindEffect`”部分即可使用
 
@@ -66,7 +70,7 @@ NativeWebSocket 不是官方包，需要通过 Git URL 安装：
 2. 将`HomeAssistantAPI.cs`、`HomeAssistantWebSocket.cs`、`HomeManager.cs`三个脚本添加到该对象上
 3. 在Inspector面板中设置以下参数：
    - `Ha Server Url`: 您的HomeAssistant服务器URL (如: `http://192.168.xx.xx:8123`)
-   - `Long Lived Token`: HomeAssistant长期访问令牌。在HA面板 左下角用户名-安全-长期访问令牌 可以创建
+   - `Long Lived Token`: HomeAssistant长期访问令牌。在HA面板 **左下角用户名-安全-长期访问令牌** 可以创建
    - `HomeManager.cs`脚本内的两个“无”，点击右边的圆圈并选中对应的脚本
 
 ![HomeAssistant.png](./.Pictures/HomeAssistant.png)
@@ -84,6 +88,7 @@ NativeWebSocket 不是官方包，需要通过 Git URL 安装：
 
 ![SmartLight.png](./.Pictures/SmartLight.png)
 
+
 ### 步骤4: 设置智能电器对象
 
 1. 在场景中创建或导入所需电器的模型，随意命名即可
@@ -96,10 +101,58 @@ NativeWebSocket 不是官方包，需要通过 Git URL 安装：
    - `Is Heating Mode`: 是否是吹热风，比如除湿机可以选上，吹出来是红色风
    - `Cooling/Heating Color`: 调整吹冷风、热风的颜色
 
-**注意：调整好`Wind`的位置并配置好脚本后，记得将对应`Wind`的可见取消，否则在运行开始时`WindEffect`会不受HA内的控制而显示**
 
-![SmartAppliance.png](./.Pictures/SmartAppliance.png)
+### 步骤5: 设置窗帘对象
 
+**现在只是实现了一块大板子上下移动来曲线救国，后面如果能搞出布料模拟就更好，但是没那技术力**
+
+1. 在场景中创建或导入窗帘的模型，或者创建一块板子，随意命名即可
+2. 将`CurtainController.cs`脚本添加到该对象上
+3. 在Inspector面板中设置以下参数：
+   - `Open Position Y`: 窗帘打开时的位置
+   - `Close Position Y`: 窗帘关闭时的位置
+   - `Smooth Time`: 窗帘移动的平滑度
+   - `Non Linear Factor`: 窗帘移动的非线性曲线控制，值越大，运动越不线性
+   - `Curtain Position`: 当前窗帘位置值(0-1)，0为打开，1为关闭
+   - `Entity Id`: HomeAssistant中对应窗帘的实体ID (例如: `input_number.curtain_position`，注意我是在HA中搞了个虚拟的窗帘选项卡，输入0~1的数值，对于真实的窗帘可能不适用)
+   - `Sync Interval`: 与HA同步的时间间隔(秒)
+
+![CurtainController.png](./.Pictures/CurtainController.png)
+
+
+### 步骤6: 设置门对象
+1. 创建一个空物体，随意命名
+2. 在场景中创建或导入门的模型，将该模型作为上一空物体的子项（这么做是为了确保旋转中心正确，以空物体为旋转中心）
+3. 将`DoorController.cs`脚本添加到空物体上
+4. 在Inspector面板中设置以下参数：
+   - `Door Switch Entity Id`: HomeAssistant中对应门开关的实体ID (例如: `switch.pi5_face_recognition_system_pi5_door_control`)
+   - `Rotation Axis`: 门旋转的轴，默认为Y轴
+   - `Rotation Angle`: 门打开时的角度
+   - `Rotation Speed`: 门旋转的速度
+
+![DoorController.png](./.Pictures/DoorController.png)
+
+
+### 步骤7: 设置燃气报警器对象
+
+1. 创建一个空物体，随意命名
+2. 将`GasAlarmLight.cs`脚本添加到空物体上
+3. 创建一个小球，将其作为空物体的子项，用于表示灯光效果
+4. 创建一个点光源，将其作为空物体的子项，用于报警亮灯
+5. 在Inspector面板中设置以下参数：
+   - `Gas Sensor Entity Id`: HomeAssistant中对应燃气报警器的实体ID (例如: `binary_sensor.pi5_gas_sensor_pi5_gas_alarm`)
+   - `Alarm Light`: 报警时的灯光实体，将子物体的点光源拖入即可
+   - `Blink Frequency`: 灯光闪烁频率
+   - `Normal Coler`: 正常时的灯光颜色
+   - `Alarm Color`: 报警时的灯光颜色
+   - `Ligjt Intensity`: 灯光强度
+   - `Light Range`: 灯光范围
+   - `Visual Object`: 用于展现灯光效果的小球，将子物体的小球拖入即可
+   - `Creat Default Sphere`: 是否创建默认的小球，若勾选，则会在当前物体下创建一个小球，用于表现灯光效果
+   - `Default Sphere Size`: 默认小球的大小
+   - `Alarm Dim Coror`: 报警时的小球颜色
+
+![GasAlarmLight.png](./.Pictures/GasAlarmLight.png)
 
 ## 3. 使用示例
 
